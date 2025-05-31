@@ -1,28 +1,22 @@
-import os
-from dotenv import load_dotenv
 import requests
 import pandas as pd
-
-load_dotenv()
-API_KEY = os.getenv("TWELVE_DATA_API_KEY")
-
-if not API_KEY:
-    raise Exception("Missing Twelve Data API key")
+from app.core.config import TWELVE_DATA_API_KEY
 
 def fetch_ohlcv(pair="EUR/USD", interval="15min", outputsize=50):
-    symbol = pair
-    url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval={interval}&outputsize={outputsize}&apikey={API_KEY}&format=JSON"
+    url = (
+        f"https://api.twelvedata.com/time_series?"
+        f"symbol={pair}&interval={interval}&outputsize={outputsize}&"
+        f"apikey={TWELVE_DATA_API_KEY}&format=JSON"
+    )
 
     print(f"[DEBUG] Fetching: {url}")
-
     response = requests.get(url)
     data = response.json()
 
     if "values" not in data:
         raise Exception(f"API Error: {data}")
 
-    df = pd.DataFrame(data["values"])
-    df = df.rename(columns={"datetime": "time"})
+    df = pd.DataFrame(data["values"]).rename(columns={"datetime": "time"})
     df["time"] = pd.to_datetime(df["time"])
     df = df.sort_values("time")
 
@@ -36,12 +30,11 @@ def fetch_ohlcv(pair="EUR/USD", interval="15min", outputsize=50):
     return df
 
 def fetch_currency_pairs():
-    url = f"https://api.twelvedata.com/forex_pairs?apikey={API_KEY}"
+    url = f"https://api.twelvedata.com/forex_pairs?apikey={TWELVE_DATA_API_KEY}"
     response = requests.get(url)
     data = response.json()
 
     if "data" not in data:
         raise Exception(f"API Error: {data}")
 
-    pairs = [item['symbol'] for item in data['data']]
-    return pairs
+    return [item["symbol"] for item in data["data"]]

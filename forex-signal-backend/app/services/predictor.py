@@ -3,39 +3,20 @@ import pandas_ta as ta
 def make_prediction(df):
     df = df.copy()
 
-    # Add RSI
+    # Indicators
     df["rsi"] = ta.rsi(df["close"], length=14)
-
-    # Add MACD
-    macd = ta.macd(df["close"])
-    df = df.join(macd)
-
-    # Add Bollinger Bands
-    bbands = ta.bbands(df["close"], length=20)
-    df = df.join(bbands)
-
-    # Add Stochastic Oscillator
-    stoch = ta.stoch(df["high"], df["low"], df["close"])
-    df = df.join(stoch)
-
-    # Add EMA 20 and EMA 50
+    df = df.join(ta.macd(df["close"]))
+    df = df.join(ta.bbands(df["close"], length=20))
+    df = df.join(ta.stoch(df["high"], df["low"], df["close"]))
     df["ema20"] = ta.ema(df["close"], length=20)
     df["ema50"] = ta.ema(df["close"], length=50)
-
-    # Add ADX
     df["adx"] = ta.adx(df["high"], df["low"], df["close"])["ADX_14"]
-
-    # Add CCI
     df["cci"] = ta.cci(df["high"], df["low"], df["close"], length=20)
-
-    # Add ATR
     df["atr"] = ta.atr(df["high"], df["low"], df["close"], length=14)
 
     latest = df.iloc[-1]
-
     signal_reasons = []
     signal = "HOLD"
-
     # RSI logic
     if latest["rsi"] < 30:
         signal_reasons.append("RSI indicates oversold")
@@ -114,5 +95,5 @@ def make_prediction(df):
         "adx": round(latest["adx"], 2),
         "cci": round(latest["cci"], 2),
         "atr": round(latest["atr"], 4),
-        "reason": signal_reasons
+        "reason": signal_reasons,
     }
