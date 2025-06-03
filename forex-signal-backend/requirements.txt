@@ -1,6 +1,9 @@
 fastapi
 uvicorn
+xgboost
 requests
 pandas
 pandas_ta
+python-dotenv
 numpy==1.26.4
+scikit-learn

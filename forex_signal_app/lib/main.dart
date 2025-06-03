@@ -73,55 +73,58 @@ class _SignalSelectorPageState extends State<SignalSelectorPage> {
 }
 
 
-  Future<void> fetchSignal() async {
-    setState(() {
-      loading = true;
-      result = '';
-    });
+Future<void> fetchSignal() async {
+  setState(() {
+    loading = true;
+    result = '';
+  });
 
-    final uri = Uri.parse(
-        'http://127.0.0.1:8000/api/signal?pair=$selectedPair&tf=$selectedTimeframe');
+  final uri = Uri.parse(
+      'http://127.0.0.1:8000/api/signal?pair=$selectedPair&tf=$selectedTimeframe');
 
-    try {
-      final response = await http.get(uri);
+  try {
+    final response = await http.get(uri);
+    print('Raw response: ${response.body}'); // Debugging
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final prediction = data['prediction'];
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final prediction = data['prediction'] ?? {};
+      final indicators = prediction['indicators'] ?? {};
+      final macd = indicators['macd'] ?? {};
 
-        setState(() {
-result = '''
-Signal: ${prediction['signal']}
-Close: ${prediction['close']}
-RSI: ${prediction['rsi']}
-MACD: ${prediction['macd']} (Signal: ${prediction['macd_signal']})
-Bollinger Bands: Upper ${prediction['bollinger_upper']}, Lower ${prediction['bollinger_lower']}
-Stochastic: ${prediction['stochastic_k']} / ${prediction['stochastic_d']}
-EMA20: ${prediction['ema20']} | EMA50: ${prediction['ema50']}
-ADX: ${prediction['adx']}
-CCI: ${prediction['cci']}
-ATR: ${prediction['atr']}
+      setState(() {
+        result = '''
+Signal: ${prediction['signal'] ?? 'N/A'}
+Confidence: ${prediction['confidence']?.toStringAsFixed(2) ?? 'N/A'}%
+Close: ${indicators['close']?.toStringAsFixed(4) ?? 'N/A'}
+RSI: ${indicators['rsi']?.toStringAsFixed(2) ?? 'N/A'}
+MACD: ${macd['value']?.toStringAsFixed(4) ?? 'N/A'} (Signal: ${macd['signal']?.toStringAsFixed(4) ?? 'N/A'})
+Bollinger Bands: Upper ${indicators['bollinger_upper']?.toStringAsFixed(4) ?? 'N/A'}, Lower ${indicators['bollinger_lower']?.toStringAsFixed(4) ?? 'N/A'}
+Stochastic: ${indicators['stochastic_k']?.toStringAsFixed(2) ?? 'N/A'} / ${indicators['stochastic_d']?.toStringAsFixed(2) ?? 'N/A'}
+EMA20: ${indicators['ema20']?.toStringAsFixed(4) ?? 'N/A'} | EMA50: ${indicators['ema50']?.toStringAsFixed(4) ?? 'N/A'}
+ADX: ${indicators['adx']?.toStringAsFixed(2) ?? 'N/A'}
+CCI: ${indicators['cci']?.toStringAsFixed(2) ?? 'N/A'}
+ATR: ${indicators['atr']?.toStringAsFixed(4) ?? 'N/A'}
 
 Reasoning:
-- ${prediction['reason'].join('\n- ')}
+- ${(prediction['reason'] as List?)?.join('\n- ') ?? 'No reasoning provided'}
 ''';
-        });
-      } else {
-        setState(() {
-          result = 'Error: ${response.body}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        result = 'Failed to connect: $e';
       });
-    } finally {
+    } else {
       setState(() {
-        loading = false;
+        result = 'Error: ${response.statusCode} - ${response.body}';
       });
     }
+  } catch (e) {
+    setState(() {
+      result = 'Failed to connect: ${e.toString()}';
+    });
+  } finally {
+    setState(() {
+      loading = false;
+    });
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(

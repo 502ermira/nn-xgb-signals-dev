@@ -1,6 +1,50 @@
+import pandas as pd
 import pandas_ta as ta
+from app.ml.data_preparation import prepare_cnn_lstm_input
+from app.ml.models import load_hybrid_model, hybrid_predict
+from app.models.prediction import Prediction
+from app.db.database import SessionLocal
+import xgboost as xgb
+import tensorflow as tf
+import numpy as np
+import os
+from datetime import datetime
+from sqlalchemy.orm import Session
+from datetime import datetime 
 
-def make_prediction(df):
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def log_prediction(
+    symbol: str, 
+    timeframe: str, 
+    timestamp: str,
+    signal: str, 
+    probs: dict,
+    db: Session
+):
+    timestamp_dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+    
+    new_entry = Prediction(
+        timestamp=timestamp_dt,
+        symbol=symbol,
+        timeframe=timeframe,
+        signal=signal,
+        cnn_lstm_probs=probs.get("cnn_lstm_probs", []),
+        xgb_probs=probs.get("xgb_probs", []),
+        hybrid_probs=probs.get("hybrid_probs", [])
+    )
+    db.add(new_entry)
+    db.commit()
+    db.refresh(new_entry)
+    return new_entry
+
+def make_prediction(df, symbol: str
+                    , timeframe: str):
     df = df.copy()
 
     # Indicators
@@ -80,11 +124,62 @@ def make_prediction(df):
     elif any(r in signal_reasons for r in sell_signals) and not any(r in signal_reasons for r in buy_signals):
         signal = "SELL"
 
+    feature_cols = ["close", "rsi", "MACD_12_26_9", "MACDs_12_26_9", "BBU_20_2.0", "BBL_20_2.0",
+                    "STOCHk_14_3_3", "STOCHd_14_3_3", "ema20", "ema50", "adx", "cci", "atr"]
+    
+    print(f"[DEBUG] DataFrame shape before preparation: {df.shape}")
+    print(f"[DEBUG] DataFrame columns: {df.columns.tolist()}")
+    print(f"[DEBUG] Checking for missing columns: {[col for col in feature_cols if col not in df.columns]}")
+    X_input, _ = prepare_cnn_lstm_input(df, feature_cols)
+    print(f"[DEBUG] X_input shape: {X_input.shape if X_input is not None else 'None'}")
+
+    if len(X_input) > 0:
+        X_input = X_input[-1:]
+        print(f"[DEBUG] Using only last sequence: {X_input.shape}")
+    else:
+        raise ValueError("No valid sequences available for prediction")
+
+    cnn_lstm_model, xgb_model = load_hybrid_model(symbol, timeframe)
+
+    hybrid_probs_array, _ = hybrid_predict(cnn_lstm_model, xgb_model, X_input)
+    hybrid_probs = hybrid_probs_array[0]
+
+    classes = ["BUY", "HOLD", "SELL"]
+    hybrid_signal = classes[np.argmax(hybrid_probs)]
+
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    db = SessionLocal()
+    try:
+        log_prediction(
+            symbol=symbol,
+            timeframe=timeframe,
+            timestamp=now,
+            signal=hybrid_signal,
+            probs={
+                "cnn_lstm_probs": [],
+                "xgb_probs": [], 
+                "hybrid_probs": hybrid_probs.tolist(),
+            },
+            db=db
+        )
+    finally:
+        db.close()
+
     return {
-        "signal": signal,
-        "rsi": round(latest["rsi"], 2),
-        "macd": round(latest["MACD_12_26_9"], 4),
-        "macd_signal": round(latest["MACDs_12_26_9"], 4),
+        "signal": hybrid_signal,
+        "confidence": float(np.max(hybrid_probs)),
+        "probabilities": {
+            "BUY": float(hybrid_probs[0]),
+            "HOLD": float(hybrid_probs[1]),
+            "SELL": float(hybrid_probs[2])
+        },
+        "indicators": {
+            "rsi": round(latest["rsi"], 2),
+            "macd": {
+                "value": round(latest["MACD_12_26_9"], 4),
+                "signal": round(latest["MACDs_12_26_9"], 4)
+            },
         "close": round(latest["close"], 4),
         "bollinger_upper": round(latest["BBU_20_2.0"], 4),
         "bollinger_lower": round(latest["BBL_20_2.0"], 4),
@@ -95,5 +190,6 @@ def make_prediction(df):
         "adx": round(latest["adx"], 2),
         "cci": round(latest["cci"], 2),
         "atr": round(latest["atr"], 4),
+        },
         "reason": signal_reasons,
     }
