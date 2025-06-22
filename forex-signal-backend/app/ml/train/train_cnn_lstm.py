@@ -8,7 +8,6 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout, Conv1D, MaxPooling1D, Flatten
 import tensorflow as tf
 
-# Get the absolute path to the root directory
 current_dir = Path(__file__).parent
 root_dir = current_dir.parent.parent.parent
 sys.path.append(str(root_dir))

@@ -45,8 +45,8 @@ def train(pair: str, timeframe: str):
     feature_cols = [
         "close", 
         "rsi", 
-        "MACD",          # Matches your CSV
-        "MACD_Signal",   # Matches your CSV
+        "MACD",
+        "MACD_Signal",
         "BBU_20_2.0",    
         "BBL_20_2.0",    
         "STOCHk_14_3_3", 

@@ -84,13 +84,14 @@ Future<void> fetchSignal() async {
 
   try {
     final response = await http.get(uri);
-    print('Raw response: ${response.body}'); // Debugging
+    print('Raw response: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final prediction = data['prediction'] ?? {};
       final indicators = prediction['indicators'] ?? {};
-      final macd = indicators['macd'] ?? {};
+      final macdValue = indicators['macd']?['value']?.toStringAsFixed(4) ?? 'N/A';
+      final macdSignal = indicators['macd']?['signal']?.toStringAsFixed(4) ?? 'N/A';
 
       setState(() {
         result = '''
@@ -98,7 +99,7 @@ Signal: ${prediction['signal'] ?? 'N/A'}
 Confidence: ${prediction['confidence']?.toStringAsFixed(2) ?? 'N/A'}%
 Close: ${indicators['close']?.toStringAsFixed(4) ?? 'N/A'}
 RSI: ${indicators['rsi']?.toStringAsFixed(2) ?? 'N/A'}
-MACD: ${macd['value']?.toStringAsFixed(4) ?? 'N/A'} (Signal: ${macd['signal']?.toStringAsFixed(4) ?? 'N/A'})
+'MACD: $macdValue (Signal: $macdSignal)'
 Bollinger Bands: Upper ${indicators['bollinger_upper']?.toStringAsFixed(4) ?? 'N/A'}, Lower ${indicators['bollinger_lower']?.toStringAsFixed(4) ?? 'N/A'}
 Stochastic: ${indicators['stochastic_k']?.toStringAsFixed(2) ?? 'N/A'} / ${indicators['stochastic_d']?.toStringAsFixed(2) ?? 'N/A'}
 EMA20: ${indicators['ema20']?.toStringAsFixed(4) ?? 'N/A'} | EMA50: ${indicators['ema50']?.toStringAsFixed(4) ?? 'N/A'}

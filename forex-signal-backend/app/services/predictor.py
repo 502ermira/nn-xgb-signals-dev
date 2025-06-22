@@ -49,7 +49,9 @@ def make_prediction(df, symbol: str
 
     # Indicators
     df["rsi"] = ta.rsi(df["close"], length=14)
-    df = df.join(ta.macd(df["close"]))
+    macd = ta.macd(df["close"])
+    macd.columns = ["MACD", "MACD_Hist", "MACD_Signal"]
+    df = df.join(macd)
     df = df.join(ta.bbands(df["close"], length=20))
     df = df.join(ta.stoch(df["high"], df["low"], df["close"]))
     df["ema20"] = ta.ema(df["close"], length=20)
@@ -68,9 +70,9 @@ def make_prediction(df, symbol: str
         signal_reasons.append("RSI indicates overbought")
 
     # MACD logic
-    if latest["MACD_12_26_9"] > latest["MACDs_12_26_9"]:
+    if latest["MACD"] > latest["MACD_Signal"]:
         signal_reasons.append("MACD bullish crossover")
-    elif latest["MACD_12_26_9"] < latest["MACDs_12_26_9"]:
+    elif latest["MACD"] < latest["MACD_Signal"]:
         signal_reasons.append("MACD bearish crossover")
 
     # Bollinger Band logic
@@ -124,7 +126,7 @@ def make_prediction(df, symbol: str
     elif any(r in signal_reasons for r in sell_signals) and not any(r in signal_reasons for r in buy_signals):
         signal = "SELL"
 
-    feature_cols = ["close", "rsi", "MACD_12_26_9", "MACDs_12_26_9", "BBU_20_2.0", "BBL_20_2.0",
+    feature_cols = ["close", "rsi", "MACD", "MACD_Signal", "BBU_20_2.0", "BBL_20_2.0",
                     "STOCHk_14_3_3", "STOCHd_14_3_3", "ema20", "ema50", "adx", "cci", "atr"]
     
     print(f"[DEBUG] DataFrame shape before preparation: {df.shape}")
@@ -177,8 +179,8 @@ def make_prediction(df, symbol: str
         "indicators": {
             "rsi": round(latest["rsi"], 2),
             "macd": {
-                "value": round(latest["MACD_12_26_9"], 4),
-                "signal": round(latest["MACDs_12_26_9"], 4)
+                "value": round(latest["MACD"], 4),
+                "signal": round(latest["MACD_Signal"], 4)
             },
         "close": round(latest["close"], 4),
         "bollinger_upper": round(latest["BBU_20_2.0"], 4),

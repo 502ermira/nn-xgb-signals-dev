@@ -47,23 +47,24 @@ def add_indicators(df):
     return df
 
 def label_signal(row):
+    # Make conditions stricter to reduce HOLD cases
     buy_conditions = [
-        row["rsi"] < 30,
+        row["rsi"] < 25,
         row["ema20"] > row["ema50"],
-        "MACD" in row and row["MACD"] > row["MACD_Signal"],
-        "BBL_20_2.0" in row and row["close"] < row["BBL_20_2.0"]
+        row["MACD"] > row["MACD_Signal"],
+        row["close"] < row["BBL_20_2.0"]
     ]
     
     sell_conditions = [
-        row["rsi"] > 70,
+        row["rsi"] > 75,
         row["ema20"] < row["ema50"],
-        "MACD" in row and row["MACD"] < row["MACD_Signal"],
-        "BBU_20_2.0" in row and row["close"] > row["BBU_20_2.0"]
+        row["MACD"] < row["MACD_Signal"],
+        row["close"] > row["BBU_20_2.0"]
     ]
     
-    if sum(buy_conditions) >= 3:
+    if sum(buy_conditions) >= 2:
         return 0  # BUY
-    elif sum(sell_conditions) >= 3:
+    elif sum(sell_conditions) >= 2:
         return 2  # SELL
     return 1  # HOLD
 

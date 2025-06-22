@@ -18,7 +18,7 @@ def fetch_ohlcv(pair="EUR/USD", interval="15min", outputsize=5000):
         print("[DEBUG] Full API Response:", data)
         raise Exception(f"API Error: {data}")
     
-    if len(data["values"]) < 50:  # Minimum data points needed
+    if len(data["values"]) < 50:
         raise Exception(f"Insufficient data points: {len(data['values'])}")
 
     df = pd.DataFrame(data["values"]).rename(columns={"datetime": "time"})

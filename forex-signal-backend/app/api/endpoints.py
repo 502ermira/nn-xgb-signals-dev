@@ -36,13 +36,12 @@ def get_prediction_history(limit: int = 50):
     db = SessionLocal()
     try:
         records = (
-            db.query(Prediction)  # Changed from PredictionLog to Prediction
+            db.query(Prediction)
             .order_by(Prediction.timestamp.desc())
             .limit(limit)
             .all()
         )
         
-        # Properly serialize SQLAlchemy objects
         return [
             {
                 "timestamp": record.timestamp,
