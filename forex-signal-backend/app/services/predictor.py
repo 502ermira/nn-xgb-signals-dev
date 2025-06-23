@@ -8,9 +8,9 @@ import xgboost as xgb
 import tensorflow as tf
 import numpy as np
 import os
-from datetime import datetime
 from sqlalchemy.orm import Session
 from datetime import datetime 
+from joblib import load as joblib_load
 
 def get_db():
     db = SessionLocal()
@@ -132,7 +132,14 @@ def make_prediction(df, symbol: str
     print(f"[DEBUG] DataFrame shape before preparation: {df.shape}")
     print(f"[DEBUG] DataFrame columns: {df.columns.tolist()}")
     print(f"[DEBUG] Checking for missing columns: {[col for col in feature_cols if col not in df.columns]}")
-    X_input, _ = prepare_cnn_lstm_input(df, feature_cols)
+    
+    pair_name = symbol.lower().replace("/", "")
+    scaler_path = os.path.join("app", "ml", "models", f"{pair_name}_{timeframe}", "scaler.save")
+    if not os.path.exists(scaler_path):
+        raise FileNotFoundError(f"Scaler not found at {scaler_path}")
+    scaler = joblib_load(scaler_path)
+    
+    X_input, _ = prepare_cnn_lstm_input(df, feature_cols, scaler=scaler)
     print(f"[DEBUG] X_input shape: {X_input.shape if X_input is not None else 'None'}")
 
     if len(X_input) > 0:

@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout, Conv1D, MaxPooling1D, Flatten
 import tensorflow as tf
+import joblib
 
 current_dir = Path(__file__).parent
 root_dir = current_dir.parent.parent.parent
@@ -74,6 +75,9 @@ def train(pair: str, timeframe: str):
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     model.fit(X, y, epochs=20, batch_size=32, validation_split=0.2, verbose=1)
     model.save(model_path)
+    scaler_path = os.path.join(model_dir, "scaler.save")
+    joblib.dump(scaler, scaler_path)
+    print(f"✅ Scaler saved to {scaler_path}")
     print(f"✅ CNN-LSTM model saved to {model_path}")
 
 if __name__ == "__main__":
