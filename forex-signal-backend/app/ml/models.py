@@ -4,7 +4,6 @@ from keras.models import load_model
 import os
 import tensorflow as tf
 
-# Path to saved models
 CNN_LSTM_PATH = "ml/models/cnn_lstm_model.h5"
 XGB_PATH = "ml/models/xgb_model.json"
 

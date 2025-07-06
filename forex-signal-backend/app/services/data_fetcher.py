@@ -25,17 +25,14 @@ def fetch_ohlcv(pair="EUR/USD", interval="15min", outputsize=5000):
     df["time"] = pd.to_datetime(df["time"])
     df = df.sort_values("time")
 
-    # Verify we have all required columns
     required_cols = ["open", "high", "low", "close"]
     missing = [col for col in required_cols if col not in df.columns]
     if missing:
         raise Exception(f"Missing columns: {missing}")
 
-    # Convert to numeric
     for col in required_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # Drop any rows with missing values
     df = df.dropna()
     
     return df

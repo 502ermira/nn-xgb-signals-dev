@@ -8,11 +8,9 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final List<String> timeframes = [
-    '7min',
     '15min',
-    '1h',
-    '4h',
-    '1d',
+    '30min',
+    '1h'
   ];
 
   @override

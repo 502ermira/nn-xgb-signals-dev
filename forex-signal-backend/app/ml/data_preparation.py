@@ -25,7 +25,7 @@ def prepare_cnn_lstm_input(df, feature_cols, sequence_length=SEQUENCE_LENGTH, sc
         scaled_features = scaler.fit_transform(df[feature_cols])
     
     X = []
-    for i in range(sequence_length, len(scaled_features)):
+    for i in range(sequence_length, len(scaled_features) + 1):
         X.append(scaled_features[i-sequence_length:i])
     
     X = np.array(X)

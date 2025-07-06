@@ -13,7 +13,6 @@ current_dir = Path(__file__).parent
 root_dir = current_dir.parent.parent.parent
 sys.path.append(str(root_dir))
 
-# Now import your local module
 try:
     from app.ml.data_preparation import prepare_cnn_lstm_input
 except ImportError:
@@ -41,7 +40,6 @@ def train(pair: str, timeframe: str):
     
     df = pd.read_csv(data_file)
 
-    # Updated feature columns to exactly match CSV columns
     feature_cols = [
         "close", 
         "rsi", 
@@ -58,17 +56,14 @@ def train(pair: str, timeframe: str):
         "atr"
     ]
     
-    # Verify all required columns exist
     missing_cols = [col for col in feature_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing columns in data: {missing_cols}")
 
-    # One-hot encode target
     y = pd.get_dummies(df["label"])
 
-    # Prepare input
     X, scaler = prepare_cnn_lstm_input(df, feature_cols)
-    y = y.iloc[-len(X):].values  # align y with X
+    y = y.iloc[-len(X):].values
 
     model = create_cnn_lstm_model(input_shape=X.shape[1:], num_classes=3)
 
@@ -76,7 +71,7 @@ def train(pair: str, timeframe: str):
     model.fit(X, y, epochs=20, batch_size=32, validation_split=0.2, verbose=1)
     model.save(model_path)
     scaler_path = os.path.join(model_dir, "scaler.save")
-    joblib.dump(scaler, scaler_path)
+    joblib.dump(scaler, scaler_path) 
     print(f"✅ Scaler saved to {scaler_path}")
     print(f"✅ CNN-LSTM model saved to {model_path}")
 
