@@ -43,6 +43,32 @@ def log_prediction(
     db.refresh(new_entry)
     return new_entry
 
+def raw_xgb_predict(df, symbol, timeframe):
+    pair_name = symbol.lower().replace("/", "")
+    model_dir = os.path.join("app", "ml", "models", f"{pair_name}_{timeframe}")
+    
+    # Load artifacts
+    scaler = joblib_load(os.path.join(model_dir, "xgb_raw_scaler.save"))
+    model = xgb.Booster()
+    model.load_model(os.path.join(model_dir, "xgb_raw_model.json"))
+    le = joblib_load(os.path.join(model_dir, "label_encoder.save"))
+    
+    # Prepare last row
+    feature_cols = ["close", "rsi", "MACD", "MACD_Signal", "BBU_20_2.0", "BBL_20_2.0",
+                "STOCHk_14_3_3", "STOCHd_14_3_3", "ema20", "ema50", "adx", "cci", "atr"]
+    last_row = df[feature_cols].iloc[[-1]]
+    X_scaled = scaler.transform(last_row)
+    
+    # Predict
+    dmatrix = xgb.DMatrix(X_scaled)
+    probs = model.predict(dmatrix)[0]
+    signal_idx = np.argmax(probs)
+    
+    signal_map = {0: "BUY", 1: "HOLD", 2: "SELL"}
+    signal = signal_map.get(signal_idx, "HOLD")
+    
+    return signal, [float(p) for p in probs]
+
 def make_prediction(df, symbol: str
                     , timeframe: str):
     df = df.copy()
@@ -159,6 +185,14 @@ def make_prediction(df, symbol: str
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
     db = SessionLocal()
+
+    try:
+        raw_xgb_signal, raw_xgb_probs = raw_xgb_predict(df, symbol, timeframe)
+    except Exception as e:
+        print(f"Raw XGB prediction failed: {str(e)}")
+        raw_xgb_signal = "ERROR"
+        raw_xgb_probs = [0.33, 0.33, 0.33] 
+
     try:
         log_prediction(
             symbol=symbol,
@@ -167,7 +201,7 @@ def make_prediction(df, symbol: str
             signal=hybrid_signal,
             probs={
                 "cnn_lstm_probs": [],
-                "xgb_probs": [], 
+                "xgb_probs": raw_xgb_probs,
                 "hybrid_probs": hybrid_probs.tolist(),
             },
             db=db
@@ -182,6 +216,14 @@ def make_prediction(df, symbol: str
             "BUY": float(hybrid_probs[0]),
             "HOLD": float(hybrid_probs[1]),
             "SELL": float(hybrid_probs[2])
+        },
+        "raw_xgb": {
+            "signal": raw_xgb_signal,
+            "probabilities": {
+                "BUY": float(raw_xgb_probs[0]),
+                "HOLD": float(raw_xgb_probs[1]),
+                "SELL": float(raw_xgb_probs[2])
+            }
         },
         "indicators": {
             "rsi": round(latest["rsi"], 2),

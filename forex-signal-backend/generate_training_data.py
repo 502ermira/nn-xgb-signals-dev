@@ -10,15 +10,15 @@ from app.services.data_fetcher import fetch_ohlcv
 
 # --- CONFIG ---
 SYMBOLS = [
-    "EUR/USD", "USD/JPY", "GBP/USD", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD", 'XAU/USD',
+    "EUR/USD", "USD/JPY", "GBP/USD", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD", 'XAU/USD', 'USD/INR',
     
     "EUR/GBP", "EUR/JPY", "EUR/AUD", "EUR/CAD", "EUR/CHF",
     
     "GBP/JPY", "GBP/CAD", "GBP/AUD",
     
-    "AUD/CAD", "AUD/JPY", "NZD/JPY", "CAD/JPY",
+    "AUD/CAD", "AUD/JPY", "CAD/JPY",
     
-    "USD/THB",
+    "USD/THB", 
     
     "CHF/JPY"
 ]

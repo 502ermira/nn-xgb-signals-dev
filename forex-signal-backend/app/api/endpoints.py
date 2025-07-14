@@ -33,9 +33,8 @@ def get_supported_pairs():
             "EUR/AUD", "EUR/CAD", "EUR/CHF", "EUR/GBP", "EUR/JPY", "EUR/USD",
             "GBP/AUD", "GBP/CAD", "GBP/JPY", "GBP/USD",
             "NZD/JPY", "NZD/USD",
-            "SEK/CHF",
-            "USD/CAD", "USD/CHF", "USD/JPY", "USD/THB",
-            "XAU/USD"
+            "USD/CAD", "USD/CHF", "USD/JPY", "USD/THB", "USD/INR",
+            "XAU/USD",
         ]
         
         available_pairs = fetch_currency_pairs()

@@ -8,6 +8,8 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final List<String> timeframes = [
+    '1min',
+    '5min',
     '15min',
     '30min',
     '1h'
