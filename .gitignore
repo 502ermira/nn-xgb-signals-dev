@@ -1,10 +1,30 @@
 .venv/
+venv/
+env/
+ENV/
 
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.egg
+build/
+dist/
+pip-log.txt
 
 .vscode/
+.idea/
+*.swp
+*.swo
 
 .DS_Store
 Thumbs.db
+desktop.ini
+
+.env
+.env.local
+*.env
+**/.env
+*/.env
+
+forecast-system/app/ml/models/forecast/
+forecast-system/.env

@@ -32,7 +32,7 @@ def get_supported_pairs():
             "CHF/JPY",
             "EUR/AUD", "EUR/CAD", "EUR/CHF", "EUR/GBP", "EUR/JPY", "EUR/USD",
             "GBP/AUD", "GBP/CAD", "GBP/JPY", "GBP/USD",
-            "NZD/JPY", "NZD/USD",
+            "NZD/USD",
             "USD/CAD", "USD/CHF", "USD/JPY", "USD/THB", "USD/INR",
             "XAU/USD",
         ]
